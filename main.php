@@ -13,44 +13,167 @@ use MigrationS3NC\Managers\Storage\HomeStorageManager;
 use MigrationS3NC\Managers\Storage\LocalStorageManager;
 use MigrationS3NC\Service\StorageService;
 
-Environment::load();
+/**
+ * Display usage information
+ */
+function showUsage(): void
+{
+    print("Nextcloud S3 Migration Tool\n");
+    print("===========================\n\n");
+    print("Usage: php main.php [options]\n\n");
+    print("Options:\n");
+    print("  --upload    Upload files to S3 only\n");
+    print("  --sql       Update database (oc_storages table) only\n");
+    print("  --config    Generate new Nextcloud config file only\n");
+    print("  --all       Run all steps (default)\n");
+    print("  --help      Show this help message\n\n");
+}
 
-$fileManager = new FileUserManager();
-$filesLocalStorageManager = new FileLocalStorageManager();
+/**
+ * Parse command line arguments
+ * @return array
+ */
+function parseArguments(): array
+{
+    $args = $argv = $_SERVER['argv'] ?? [];
 
-$s3Manager = new S3Manager();
-$commands = $s3Manager->generatorPubObject(
-    array_merge(
-        $fileManager->getAll(),
-        $filesLocalStorageManager->getAll()
-    )
-);
+    $options = [
+        'upload' => false,
+        'sql' => false,
+        'config' => false,
+        'all' => false,
+        'help' => false,
+    ];
 
-$pool = $s3Manager->pool($commands);
-$promise = $pool->promise();
-$promise->wait();
+    foreach ($args as $arg) {
+        $arg = strtolower(trim($arg));
+        switch ($arg) {
+            case '--upload':
+                $options['upload'] = true;
+                break;
+            case '--sql':
+                $options['sql'] = true;
+                break;
+            case '--config':
+                $options['config'] = true;
+                break;
+            case '--all':
+                $options['all'] = true;
+                break;
+            case '--help':
+            case '-h':
+            case 'help':
+                $options['help'] = true;
+                break;
+        }
+    }
 
-// update the oc_storages table database
-$HomeStorageManager = new HomeStorageManager();
-foreach ($HomeStorageManager->getAll() as $storage) {
-    $HomeStorageManager
-        ->updateId(
+    if (!$options['upload'] && !$options['sql'] && !$options['config'] && !$options['all'] && !$options['help']) {
+        $options['all'] = true;
+    }
+
+    if ($options['all']) {
+        $options['upload'] = true;
+        $options['sql'] = true;
+        $options['config'] = true;
+    }
+
+    return $options;
+}
+
+/**
+ * Upload files to s3
+ */
+function uploadFilesToS3(): void
+{
+    $fileManager = new FileUserManager();
+    $filesLocalStorageManager = new FileLocalStorageManager();
+
+    $userFiles = $fileManager->getAll();
+    $localFiles = $filesLocalStorageManager->getAll();
+
+    $totalFiles = count($userFiles) + count($localFiles);
+    print("Uploading {$totalFiles} files to S3...\n");
+
+    if ($totalFiles === 0) {
+        return;
+    }
+
+    $s3Manager = new S3Manager();
+    $commands = $s3Manager->generatorPubObject(
+        array_merge($userFiles, $localFiles)
+    );
+
+    $pool = $s3Manager->pool($commands);
+    $promise = $pool->promise();
+    $promise->wait();
+
+    print("Upload complete.\n");
+}
+
+/**
+ * Update database tables to link to new S3
+ */
+function updateDatabase(): void
+{
+    $homeStorageManager = new HomeStorageManager();
+    foreach ($homeStorageManager->getAll() as $storage) {
+        $homeStorageManager->updateId(
             $storage->getNumericId(),
             Constants::ID_USER_OBJECT . $storage->getUid()
         );
+    }
+
+    $localStorageManager = new LocalStorageManager();
+    $localStorages = $localStorageManager->getAll();
+    if (count($localStorages) > 0) {
+        $idObjectStorage = StorageService::getNewIdLocalStorage();
+        $localStorage = $localStorages[0];
+        $localStorageManager->updateId($localStorage->getNumericId(), $idObjectStorage);
+    }
+
+    print("Database updated.\n");
 }
 
-$localStorageManager = new LocalStorageManager();
-// We manage a monobucket for the momment...
-$idObjectStorage = StorageService::getNewIdLocalStorage();
-$localStorage = $localStorageManager->getAll()[0];
-$localStorageManager->updateId($storage->getNumericId(), $idObjectStorage);
+/**
+ * Generates new configuration with S3 Connection URLs
+ */
+function generateConfig(): void
+{
+    $data = NextcloudS3Configuration::getS3Configuration();
+    $file = new FileNextcloudConfiguration("new_config.php");
+    $file->write($data);
+    $file->close();
 
-$data = NextcloudS3Configuration::getS3Configuration();
-$file = new FileNextcloudConfiguration("new_config.php");
-$file->write($data);
-$file->close();
+    print("Config generated: new_config.php\n");
+}
 
-print("\nCongrulation ! The migration is done ! 🎉 🪣\n");
-print("You should move the new_config.php file and replace Nextcloud's config.php file with it.\n");
-print("Please, check if it's new config is correct !\n\n");
+// Main execution
+$options = parseArguments();
+
+if ($options['help']) {
+    showUsage();
+    exit(0);
+}
+
+Environment::load();
+
+try {
+    if ($options['upload']) {
+        uploadFilesToS3();
+    }
+
+    if ($options['sql']) {
+        updateDatabase();
+    }
+
+    if ($options['config']) {
+        generateConfig();
+    }
+
+    print("\nMigration completed. Review new_config.php before replacing your Nextcloud config.\n");
+
+} catch (Exception $e) {
+    print("ERROR: " . $e->getMessage() . "\n");
+    exit(1);
+}
