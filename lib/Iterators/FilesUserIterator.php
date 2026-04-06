@@ -14,7 +14,7 @@ class FilesUserIterator implements \Iterator
 
     public function rewind(): void
     {
-        $this->poisition = 0;
+        $this->position = 0;
     }
 
     public function current()
@@ -24,7 +24,7 @@ class FilesUserIterator implements \Iterator
 
     public function key(): int
     {
-        return $this->poistion;
+        return $this->position;
     }
 
     public function next(): void
