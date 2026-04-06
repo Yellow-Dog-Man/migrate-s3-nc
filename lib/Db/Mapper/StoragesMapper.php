@@ -82,7 +82,7 @@ class StoragesMapper
             ]);
 
             $this->database->close();
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             LoggerSingleton::getInstance()
             ->getLogger()
             ->error($e->getMessage());
@@ -107,7 +107,7 @@ class StoragesMapper
             $this->database->close();
 
             return $result;
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             LoggerSingleton::getInstance()
             ->getLogger()
             ->error($e->getMessage());

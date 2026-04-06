@@ -57,7 +57,7 @@ class FilesMapper
             $this->database->close();
 
             return $result;
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             LoggerSingleton::getInstance()
             ->getLogger()
             ->error($e->getMessage());
@@ -103,7 +103,7 @@ class FilesMapper
             $this->database->close();
 
             return $result;
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             LoggerSingleton::getInstance()
             ->getLogger()
             ->error($e->getMessage());

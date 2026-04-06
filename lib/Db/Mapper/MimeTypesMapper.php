@@ -32,7 +32,7 @@ class MimeTypesMapper
             $this->database->close();
 
             return $result;
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             LoggerSingleton::getInstance()
             ->getLogger()
             ->error($e->getMessage());
