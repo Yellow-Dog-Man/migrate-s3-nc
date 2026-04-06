@@ -265,11 +265,48 @@ After all these, you can go in the `How to run ?` part !
 
 First, you must build with composer command-line : `composer install` from the project folder. 
 
-You must run this command to starting the migration :
+# Available Options
+```bash
+# Show help
+$ php main.php --help
+
+# Run all steps (default - original behavior)
+$ php main.php
+# or
+$ php main.php --all
+
+# Upload files to S3 only (prepare S3 location ahead of time)
+$ php main.php --upload
+
+# Update database (oc_storages table) only
+$ php main.php --sql
+
+# Generate Nextcloud config file only
+$ php main.php --config
+```
+
+### Recommended Workflow for Large Migrations
+
+For large installations, it's recommended to separate the file upload from the database update:
 
 ```bash
-$ php main.php
+# Step 1: Upload all files to S3 (this may take hours or days)
+$ php main.php --upload
+
+# Step 2: Verify files are in S3 (check your bucket)
+# ... verification steps ...
+
+# Step 3: Update the database (this is fast - minutes)
+$ php main.php --sql
+
+# Step 4: Generate config (included in --sql, but can run separately)
+$ php main.php --config
 ```
+
+**Benefits of this approach:**
+- **Reduced Risk**: File uploads can take a long time and may fail. By separating them, you can retry uploads without touching the database.
+- **Easy Rollback**: If something goes wrong, you can easily restore the database from backup without worrying about partially uploaded files.
+- **Verification**: You can verify all files are in S3 before making any database changes.
 
 ⚠️ Be careful : The migration could take hours or days. I advise you to use the [byobu](https://www.byobu.org/) app to have a virtual session and exit to leave your terminal whenever you want.
 Here is a [cheat sheet](https://gist.github.com/devhero/7b9a7281db0ac4ba683f) to navigate in byobu.
@@ -279,9 +316,13 @@ Here is a [cheat sheet](https://gist.github.com/devhero/7b9a7281db0ac4ba683f) to
 After its execution, it prints this message :
 
 ```
-Congrulation ! The migration is done !
-You should move the new_config.php file and replace Nextcloud's config.php file with it
-Please, check if it's new config is correct !
+✓ Migration steps completed successfully!
+
+Next steps:
+  1. Review the generated new_config.php file
+  2. Backup your current Nextcloud config.php
+  3. Replace config.php with new_config.php
+  4. Restart your web server
 ```
 
 It means the script has run with success !
