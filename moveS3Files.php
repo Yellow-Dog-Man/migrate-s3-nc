@@ -226,7 +226,8 @@ function generateCopyCommands(
             echo "SKIP: Target already exists: $newKey\n";
             continue;
         } catch (AwsException $e) {
-            if ($e->getAwsErrorCode() !== '404') {
+            // 404 means the object doesn't exist, which is what we want
+            if ($e->getStatusCode() !== 404) {
                 echo "ERROR checking $newKey: " . $e->getMessage() . "\n";
                 continue;
             }
