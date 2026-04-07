@@ -63,9 +63,9 @@ function buildPathToFileIdMapping($pdo): array
     $storageMap = [];
     foreach ($storages as $storage) {
         // Extract username from storage id (home::username)
-        $parts = explode('::', $storage['id']);
+        $parts = explode('::', $storage->id);
         if (isset($parts[1])) {
-            $storageMap[$storage['numeric_id']] = $parts[1];
+            $storageMap[$storage->numeric_id] = $parts[1];
         }
     }
     
@@ -92,7 +92,7 @@ function buildPathToFileIdMapping($pdo): array
     $files = $stmt->fetchAll();
     
     foreach ($files as $file) {
-        $username = $storageMap[$file['storage']] ?? null;
+        $username = $storageMap[$file->storage] ?? null;
         if (!$username) {
             continue;
         }
