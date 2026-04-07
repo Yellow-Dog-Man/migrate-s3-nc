@@ -100,7 +100,7 @@ function uploadFilesToS3(): void
     }
 
     $s3Manager = new S3Manager();
-    $commands = $s3Manager->generatorPubObject(
+    $commands = $s3Manager->generatorPutObject(
         array_merge($userFiles, $localFiles)
     );
 

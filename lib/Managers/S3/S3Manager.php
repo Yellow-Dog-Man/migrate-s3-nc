@@ -28,7 +28,7 @@ class S3Manager
         ]);
     }
 
-    public function generatorPubObject(array $files): Generator
+    public function generatorPutObject(array $files): Generator
     {
         LoggerSingleton::getInstance()
         ->getLogger()
@@ -54,7 +54,7 @@ class S3Manager
             'rejected' => function (AwsException $reason, $iterKey) {
                 LoggerSingleton::getInstance()
                 ->getLogger()
-                ->error('The programm stopped during the migration.', [
+                ->error('The program stopped during the migration.', [
                     'reason' => $reason,
                     'iter_key' => $iterKey
                 ]);
