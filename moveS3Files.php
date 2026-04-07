@@ -8,7 +8,6 @@ use Aws\Exception\AwsException;
 use MigrationS3NC\Db\DatabaseSingleton;
 use MigrationS3NC\Environment;
 use MigrationS3NC\Logger\LoggerSingleton;
-use PDOException;
 
 /**
  * I misunderstood how this script worked and synced the entire nextcloud file collection to R2 already.
@@ -38,7 +37,7 @@ try {
     $database->open();
     $pdo = $database->getPdo();
     echo "Connected to database successfully.\n";
-} catch (PDOException $e) {
+} catch (\PDOException $e) {
     fwrite(STDERR, "Database connection failed: " . $e->getMessage() . "\n");
     exit(1);
 }

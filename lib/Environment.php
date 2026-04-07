@@ -45,7 +45,7 @@ class Environment
         }
     }
 
-    private function loadMysqlEnv(Dotenv $dotenv): void
+    private static function loadMysqlEnv(Dotenv $dotenv): void
     {
         LoggerSingleton::getInstance()
         ->getLogger()
@@ -57,7 +57,7 @@ class Environment
         $dotenv->required('MYSQL_DATABASE_HOST')->notEmpty();
     }
 
-    private function loadS3CommonEnv(Dotenv $dotenv): void
+    private static function loadS3CommonEnv(Dotenv $dotenv): void
     {
         LoggerSingleton::getInstance()
         ->getLogger()
@@ -72,7 +72,7 @@ class Environment
         $dotenv->required('S3_HOSTNAME')->notEmpty();
     }
 
-    private function loadS3SwiftEnv(Dotenv $dotenv): void
+    private static function loadS3SwiftEnv(Dotenv $dotenv): void
     {
         LoggerSingleton::getInstance()
         ->getLogger()
@@ -84,7 +84,7 @@ class Environment
         $dotenv->required('S3_SWIFT_ID_PROJECT')->notEmpty();
     }
 
-    private function loadNextcloudEnv(Dotenv $dotenv): void
+    private static function loadNextcloudEnv(Dotenv $dotenv): void
     {
         LoggerSingleton::getInstance()
         ->getLogger()
