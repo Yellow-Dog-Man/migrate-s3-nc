@@ -75,6 +75,27 @@ class StoragesMapper
         try {
             $this->database->open();
 
+            // First, check if the new ID already exists
+            $checkQuery = $this->database->getPdo()->prepare('SELECT numeric_id FROM oc_storages WHERE id = :id');
+            $checkQuery->execute(['id' => $newId]);
+            $existing = $checkQuery->fetch();
+
+            if ($existing) {
+                // If the existing entry has a different numeric_id, delete it first
+                if ($existing->numeric_id != $numericId) {
+                    LoggerSingleton::getInstance()
+                    ->getLogger()
+                    ->info('Removing duplicate storage entry before update.', [
+                        'existing_numeric_id' => $existing->numeric_id,
+                        'new_id' => $newId
+                    ]);
+
+                    $deleteQuery = $this->database->getPdo()->prepare('DELETE FROM oc_storages WHERE id = :id');
+                    $deleteQuery->execute(['id' => $newId]);
+                }
+            }
+
+            // Now perform the update
             $query = $this->database->getPdo()->prepare('update oc_storages set id=:id where numeric_id=:numeric_id');
             $query->execute([
                 'id'    => $newId,
